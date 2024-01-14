@@ -1,7 +1,7 @@
 package telran.college.dto;
 
-public interface StudentMark {
+public interface LecturerHours {
 	String getName();
 
-	int getScore();
+	int getHours();
 }

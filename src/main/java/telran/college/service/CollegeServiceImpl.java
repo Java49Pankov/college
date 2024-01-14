@@ -5,7 +5,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
-import telran.college.dto.StudentMark;
+import telran.college.dto.*;
+
 import telran.college.repo.*;
 
 @Service
@@ -22,8 +23,33 @@ public class CollegeServiceImpl implements CollegeService {
 	}
 
 	@Override
-	public List<StudentMark> studentsAvgMArks() {
+	public List<NameScore> studentsAvgMarks() {
 		return studentRepo.studentsMarks();
+	}
+
+	@Override
+	public List<StudentCity> studentsScoreLess(int score) {
+		return studentRepo.findStudentsScoreLess(score);
+	}
+
+	@Override
+	public List<NamePhone> studentsBorn(int month) {
+		return studentRepo.findStudentsBornMoth(month);
+	}
+
+	@Override
+	public List<NamePhone> lectureCity(String city) {
+		return studentRepo.findLecturersByCity(city);
+	}
+
+	@Override
+	public List<NameScore> subjectsScores(String name) {
+		return studentRepo.findSubjectsScoresByStudent(name);
+	}
+
+	@Override
+	public List<LecturerHours> lecturersMostHours(int nLecturers) {
+		return lecturerRepo.findLecturesMostHours(nLecturers);
 	}
 
 }
