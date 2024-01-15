@@ -5,8 +5,10 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
-import telran.college.dto.*;
-
+import telran.college.dto.LecturerHours;
+import telran.college.dto.StudentCity;
+import telran.college.dto.NameScore;
+import telran.college.dto.NamePhone;
 import telran.college.repo.*;
 
 @Service
@@ -28,28 +30,28 @@ public class CollegeServiceImpl implements CollegeService {
 	}
 
 	@Override
-	public List<StudentCity> studentsScoreLess(int score) {
-		return studentRepo.findStudentsScoreLess(score);
-	}
-
-	@Override
-	public List<NamePhone> studentsBorn(int month) {
-		return studentRepo.findStudentsBornMoth(month);
-	}
-
-	@Override
-	public List<NamePhone> lectureCity(String city) {
-		return studentRepo.findLecturersByCity(city);
-	}
-
-	@Override
-	public List<NameScore> subjectsScores(String name) {
-		return studentRepo.findSubjectsScoresByStudent(name);
-	}
-
-	@Override
 	public List<LecturerHours> lecturersMostHours(int nLecturers) {
-		return lecturerRepo.findLecturesMostHours(nLecturers);
+		return lecturerRepo.findLecturersMostHours(nLecturers);
+	}
+
+	@Override
+	public List<StudentCity> studentsScoresLess(int nThreshold) {
+		return studentRepo.findStudentsScoresLess(nThreshold);
+	}
+
+	@Override
+	public List<NamePhone> studentsBurnMonth(int month) {
+		return studentRepo.findStudentsBurnMonth(month);
+	}
+
+	@Override
+	public List<NamePhone> lecturersCity(String city) {
+		return lecturerRepo.findLecturersCity(city);
+	}
+
+	@Override
+	public List<NameScore> subjectsScores(String studentName) {
+		return studentRepo.findSubjectScore(studentName);
 	}
 
 }

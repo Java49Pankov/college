@@ -1,6 +1,6 @@
 package telran.college.service;
 
-import java.util.*;
+import java.util.List;
 
 import telran.college.dto.*;
 
@@ -9,13 +9,14 @@ public interface CollegeService {
 
 	List<NameScore> studentsAvgMarks();
 
-	List<StudentCity> studentsScoreLess(int score);
-
-	List<NamePhone> studentsBorn(int month);
-
-	List<NamePhone> lectureCity(String city);
-
-	List<NameScore> subjectsScores(String name);
-
 	List<LecturerHours> lecturersMostHours(int nLecturers);
+
+	List<StudentCity> studentsScoresLess(int nThreshold);
+
+	List<NamePhone> studentsBurnMonth(int month);
+
+	List<NamePhone> lecturersCity(String city);
+
+	List<NameScore> subjectsScores(String studentName);
+
 }
