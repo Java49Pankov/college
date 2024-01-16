@@ -26,5 +26,12 @@ public interface MarkRepo extends JpaRepository<Mark, Long> {
 			+ "GROUP BY st.name, city "
 			+ "HAVING count(m.score) < :scoresThreshold")
 	List<StudentCity> findStudentsScoresLess(int scoresThreshold);
+	
+	@Query("SELECT student.name as name, round(avg(score)) as score "
+			+ "FROM Mark "
+			+ "GROUP BY student.name "
+			+ "ORDER BY avg(score) "
+			+ "DESC ")
+	List<NameScore> studentsMarks();
 
 }

@@ -24,7 +24,7 @@ public class CollegeServiceImpl implements CollegeService {
 
 	@Override
 	public List<NameScore> studentsAvgMarks() {
-		return studentRepo.studentsMarks();
+		return markRepo.studentsMarks();
 	}
 
 	@Override
@@ -44,8 +44,7 @@ public class CollegeServiceImpl implements CollegeService {
 
 	@Override
 	public List<NamePhone> lecturersCity(String city) {
-		// TODO method with named query
-		return null;
+		return lecturerRepo.findByCity(city);
 	}
 
 	@Override
