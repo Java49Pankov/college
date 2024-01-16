@@ -5,10 +5,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
-import telran.college.dto.LecturerHours;
-import telran.college.dto.StudentCity;
-import telran.college.dto.NameScore;
-import telran.college.dto.NamePhone;
+import telran.college.dto.*;
+
 import telran.college.repo.*;
 
 @Service
@@ -21,7 +19,7 @@ public class CollegeServiceImpl implements CollegeService {
 
 	@Override
 	public List<String> bestStudentsSubjectType(String type, int nStudents) {
-		return studentRepo.findBestStudentsSubjectType(type, nStudents);
+		return markRepo.findBestStudentsSubjectType(SubjectType.valueOf(type), nStudents);
 	}
 
 	@Override
@@ -36,7 +34,7 @@ public class CollegeServiceImpl implements CollegeService {
 
 	@Override
 	public List<StudentCity> studentsScoresLess(int nThreshold) {
-		return studentRepo.findStudentsScoresLess(nThreshold);
+		return markRepo.findStudentsScoresLess(nThreshold);
 	}
 
 	@Override
@@ -46,12 +44,13 @@ public class CollegeServiceImpl implements CollegeService {
 
 	@Override
 	public List<NamePhone> lecturersCity(String city) {
-		return lecturerRepo.findLecturersCity(city);
+		// TODO method with named query
+		return null;
 	}
 
 	@Override
-	public List<NameScore> subjectsScores(String studentName) {
-		return studentRepo.findSubjectScore(studentName);
+	public List<SubjectNameScore> subjectsScores(String studentName) {
+		return markRepo.findByStudentName(studentName);
 	}
 
 }

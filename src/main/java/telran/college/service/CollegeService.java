@@ -17,6 +17,6 @@ public interface CollegeService {
 
 	List<NamePhone> lecturersCity(String city);
 
-	List<NameScore> subjectsScores(String studentName);
+	List<SubjectNameScore> subjectsScores(String studentName);
 
 }
