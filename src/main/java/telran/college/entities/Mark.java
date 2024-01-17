@@ -18,4 +18,5 @@ public class Mark {
 	Subject subject;
 	@Column(nullable = false)
 	int score;
+
 }
