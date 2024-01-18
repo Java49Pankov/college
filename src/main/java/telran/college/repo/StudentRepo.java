@@ -14,5 +14,12 @@ public interface StudentRepo extends JpaRepository<Student, Long> {
 			+ "FROM Student st "
 			+ "WHERE EXTRACT(MONTH FROM st.birthDate) = :month ")
 	List<NamePhone> findStudentsBurnMonth(int month);
+	
+	@Query("SELECT student "
+			+ "FROM Mark mark "
+			+ "RIGHT JOIN mark.student student "
+			+ "GROUP BY student "
+			+ "HAVING count(mark.score) < :scoresThreshold")
+	List<Student> findStudentsScoresLess(int scoresThreshold);
 
 }

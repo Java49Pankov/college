@@ -33,7 +33,7 @@ public class Subject {
 		this.lecturer = lecturer;
 	}
 
-	public SubjectDto build() {
+	public SubjectDto buildDto() {
 		return new SubjectDto(id, name, hours, lecturer.id, type);
 	}
 }

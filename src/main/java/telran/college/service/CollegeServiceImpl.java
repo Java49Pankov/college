@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import telran.college.dto.*;
 import telran.college.entities.*;
@@ -37,7 +39,7 @@ public class CollegeServiceImpl implements CollegeService {
 
 	@Override
 	public List<StudentCity> studentsScoresLess(int nThreshold) {
-		return markRepo.findStudentsScoresLess(nThreshold);
+		return markRepo.findStudentsCityScoresLess(nThreshold);
 	}
 
 	@Override
@@ -66,18 +68,24 @@ public class CollegeServiceImpl implements CollegeService {
 	}
 
 	@Override
+	@Transactional(readOnly = false)
 	public PersonDto addLecturer(PersonDto personDto) {
-		// TODO Auto-generated method stub
-		return null;
+		if (lecturerRepo.existsById(personDto.id())) {
+			throw new IllegalStateException(personDto.id() + " already exists");
+		}
+		lecturerRepo.save(new Lecturer(personDto));
+		return personDto;
 	}
 
 	@Override
 	@Transactional(readOnly = false)
 	public SubjectDto addSubject(SubjectDto subjectDto) {
+		if (subjectRepo.existsById(subjectDto.id())) {
+			throw new IllegalStateException("subject " + subjectDto.id() + " already exists");
+		}
 		Lecturer lecturer = null;
 		if (subjectDto.lecturerId() != null) {
-			lecturer = lecturerRepo.findById(subjectDto.lecturerId())
-					.orElseThrow(() -> new NotFoundException(subjectDto.lecturerId() + " not exists"));
+			lecturer = findLecturer(subjectDto.lecturerId());
 		}
 		Subject subject = new Subject(subjectDto);
 		subject.setLecturer(lecturer);
@@ -85,10 +93,29 @@ public class CollegeServiceImpl implements CollegeService {
 		return subjectDto;
 	}
 
+	private Lecturer findLecturer(@Positive Long lecturerId) {
+		return lecturerRepo.findById(lecturerId)
+				.orElseThrow(() -> new NotFoundException(lecturerId + " not exists"));
+	}
+
 	@Override
+	@Transactional(readOnly = false)
 	public MarkDto addMark(MarkDto markDto) {
-		// TODO Auto-generated method stub
-		return null;
+		Subject subject = findSubject(markDto.subjectId());
+		Student student = findStudent(markDto.studentId());
+		Mark mark = new Mark(student, subject, markDto.score());
+		markRepo.save(mark);
+		return markDto;
+	}
+
+	private Student findStudent(@NotNull @Positive long studentId) {
+		return studentRepo.findById(studentId)
+				.orElseThrow(() -> new NotFoundException(studentId + " not exists"));
+	}
+
+	private Subject findSubject(@NotNull @Positive long subjectId) {
+		return subjectRepo.findById(subjectId)
+				.orElseThrow(() -> new NotFoundException(subjectId + " not exists"));
 	}
 
 	@Override
@@ -102,36 +129,47 @@ public class CollegeServiceImpl implements CollegeService {
 
 	@Override
 	public PersonDto updateLecturer(PersonDto personDto) {
-		// TODO Auto-generated method stub
-		return null;
+		Lecturer lecturer = lecturerRepo.findById(personDto.id())
+				.orElseThrow(() -> new NotFoundException(personDto.id() + " not exist"));
+		lecturer.setCity(personDto.city());
+		lecturer.setPhone(personDto.phone());
+		return personDto;
 	}
 
 	@Override
+	@Transactional(readOnly = false)
 	public PersonDto deleteLecturer(long id) {
-		// TODO
-		// find Lecturer by id (with possible NotFoundException)
-		// 1. find all subjects with a given lecturer id/ findByLecturerId
-		// 2. update all subjects with being deleted lecturer by setting null in field
-		// lecturer
-		// 3. lecturerRepo.delete(lecturer)
-		// 4. returns lecturer.build()
-		return null;
+		Lecturer lecturer = findLecturer(id);
+		List<Subject> subjects = subjectRepo.findByLecturerId(id);
+		subjects.forEach(lect -> lect.setLecturer(null));
+		lecturerRepo.delete(lecturer);
+		return lecturer.buildDto();
 	}
 
 	@Override
+	@Transactional(readOnly = false)
 	public SubjectDto deleteSubject(long id) {
-		// TODO
-		// find Subject by id (with possible NotFoundException)
-		// delete all marks with a given subject
-		// delete subject
-		// return subject.build()
-		return null;
+		Subject subject = findSubject(id);
+		List<Mark> listMarks = markRepo.findBySubjectId(id);
+		listMarks.forEach(markRepo::delete);
+		subjectRepo.delete(subject);
+		return subject.buildDto();
 	}
 
 	@Override
+	@Transactional(readOnly = false)
 	public List<PersonDto> deleteStudentsHavingScoresLess(int nScores) {
-		// TODO Auto-generated method stub
-		return null;
+		List<Student> deleteStudents = studentRepo.findStudentsScoresLess(nScores);
+		deleteStudents.forEach(st -> {
+			deleteStudent(st);
+		});
+		return deleteStudents.stream().map(Student::buildDto).toList();
+	}
+
+	private void deleteStudent(Student student) {
+		List<Mark> mark = markRepo.findByStudentId(student.getId());
+		mark.forEach(markRepo::delete);
+		studentRepo.delete(student);
 	}
 
 }

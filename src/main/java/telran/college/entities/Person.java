@@ -5,7 +5,6 @@ import java.time.*;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import telran.college.dto.PersonDto;
 
 @Entity
@@ -32,7 +31,7 @@ public abstract class Person {
 		phone = personDto.phone();
 	}
 
-	public PersonDto build() {
+	public PersonDto buildDto() {
 		return new PersonDto(id, name, birthDate, city, phone);
 	}
 

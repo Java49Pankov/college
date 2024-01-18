@@ -18,5 +18,5 @@ public interface LecturerRepo extends JpaRepository<Lecturer, Long> {
 
 	
 	List<NamePhone> findByCity(String city);
-
+	
 }

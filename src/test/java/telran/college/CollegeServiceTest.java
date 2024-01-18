@@ -2,6 +2,8 @@ package telran.college;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -11,13 +13,38 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.jdbc.Sql;
 
 import telran.college.dto.*;
+import telran.college.entities.*;
+import telran.college.repo.*;
 import telran.college.service.CollegeService;
+import telran.exceptions.NotFoundException;
 
 @SpringBootTest
 @Sql(scripts = { "db_test.sql" })
 class CollegeServiceTest {
+
 	@Autowired
 	CollegeService collegeService;
+	@Autowired
+	SubjectRepo subjectRepo;
+	@Autowired
+	LecturerRepo lecturerRepo;
+	@Autowired
+	StudentRepo studentRepo;
+
+	PersonDto newStudent = new PersonDto(129, "Alex", LocalDate.of(1995, 05, 12), "Holon", "051-6677889");
+	PersonDto studentExists = new PersonDto(128, "Yakob", LocalDate.of(2000, 10, 10), "Rehovot", "051-6677889");
+	PersonDto studentUpdate = new PersonDto(128, "Yakob", LocalDate.of(2000, 10, 10), "Bat-yam", "051-6677888");
+	PersonDto newLecturer = new PersonDto(1233, "Ivanov", LocalDate.of(1976, 04, 25), "Tel-aviv", "052-7778881");
+	PersonDto LecturerExists = new PersonDto(1232, "Sockratus", LocalDate.of(1960, 03, 15), "Rehovot", "057-7664821");
+	PersonDto lecturerUpdate = new PersonDto(1232, "Sockratus", LocalDate.of(1960, 03, 15), "Haifa", "052-7778887");
+	PersonDto personDto = new PersonDto(1230, "Abraham", LocalDate.parse("1957-01-23"),
+			"Jerusalem", "050-1111122");
+	SubjectDto newSubject = new SubjectDto(326, "Angular", 70, 1232l, SubjectType.FRONT_END);
+	SubjectDto lecturerIdNull = new SubjectDto(328, "Angular", 70, 1235l, SubjectType.FRONT_END);
+	SubjectDto subjectExists = new SubjectDto(321, "Java Core", 150, 1230l, SubjectType.BACK_END);
+	MarkDto studentNotExist = new MarkDto(129, 321, 70);
+	MarkDto subjectNotExist = new MarkDto(123, 326, 90);
+	MarkDto newMark = new MarkDto(123, 321, 100);
 
 	@Test
 	void bestStudentsTypeTest() {
@@ -100,7 +127,75 @@ class CollegeServiceTest {
 			assertEquals(subjects[i], subjectScores[i].getSubjectName());
 			assertEquals(scores[i], subjectScores[i].getScore());
 		});
+	}
 
+	@Test
+	void addStudentTest() {
+		PersonDto addStudent = collegeService.addStudent(newStudent);
+		assertEquals(newStudent, addStudent);
+		assertThrowsExactly(IllegalStateException.class, () -> collegeService.addStudent(studentExists));
+	}
+
+	@Test
+	void addLecturerTest() {
+		PersonDto addLecturer = collegeService.addLecturer(newLecturer);
+		assertEquals(newLecturer, addLecturer);
+		assertThrowsExactly(IllegalStateException.class, () -> collegeService.addLecturer(LecturerExists));
+	}
+
+	@Test
+	void updateStudentTest() {
+		assertEquals(studentUpdate, collegeService.updateStudent(studentUpdate));
+		assertThrowsExactly(NotFoundException.class, () -> collegeService.updateStudent(newStudent));
+	}
+
+	@Test
+	void updateLecturerTest() {
+		assertEquals(lecturerUpdate, collegeService.updateLecturer(lecturerUpdate));
+		assertThrowsExactly(NotFoundException.class, () -> collegeService.updateLecturer(newLecturer));
+	}
+
+	@Test
+	void addSubjectTest() {
+		assertEquals(newSubject, collegeService.addSubject(newSubject));
+		assertThrowsExactly(IllegalStateException.class, () -> collegeService.addSubject(subjectExists));
+		assertThrowsExactly(NotFoundException.class, () -> collegeService.addSubject(lecturerIdNull));
+	}
+
+	@Test
+	void addMarkTest() {
+		assertThrowsExactly(NotFoundException.class, () -> collegeService.addMark(studentNotExist));
+		assertThrowsExactly(NotFoundException.class, () -> collegeService.addMark(subjectNotExist));
+		assertEquals(newMark, collegeService.addMark(newMark));
+	}
+
+	@Test
+	void deleteLecturerTest() {
+		assertThrowsExactly(NotFoundException.class,
+				() -> collegeService.deleteLecturer(2000));
+		assertEquals(personDto, collegeService.deleteLecturer(1230));
+		assertNull(lecturerRepo.findById(1230l).orElse(null));
+		Subject subject = subjectRepo.findById(322l).get();
+		assertNull(subject.getLecturer());
+	}
+
+	@Test
+	void deleteSubjectTest() {
+		assertThrowsExactly(NotFoundException.class, () -> collegeService.deleteSubject(1000));
+		assertEquals(subjectExists, collegeService.deleteSubject(321));
+		assertNull(subjectRepo.findById(321l).orElse(null));
+	}
+
+	@Test
+	void deleteStudentsLessScoresTest() {
+		PersonDto [] expected = {
+				new PersonDto(128, "Yakob", LocalDate.parse("2000-10-10"), "Rehovot",
+						"051-6677889")	
+			};
+			PersonDto [] actual  = collegeService.deleteStudentsHavingScoresLess(2)
+					.toArray(PersonDto[]::new);
+			assertArrayEquals(expected, actual);
+			assertNull(studentRepo.findById(128l).orElse(null));
 	}
 
 }
