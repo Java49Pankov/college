@@ -138,8 +138,6 @@ public class CollegeServiceImpl implements CollegeService {
 	@Transactional(readOnly = false)
 	public PersonDto deleteLecturer(long id) {
 		Lecturer lecturer = findLecturer(id);
-		List<Subject> subjects = subjectRepo.findByLecturerId(id);
-		subjects.forEach(s -> s.setLecturer(null));
 		lecturerRepo.delete(lecturer);
 		return lecturer.buildDto();
 	}
@@ -148,8 +146,6 @@ public class CollegeServiceImpl implements CollegeService {
 	@Transactional(readOnly = false)
 	public SubjectDto deleteSubject(long id) {
 		Subject subject = findSubject(id);
-		List<Mark> marks = markRepo.findBySubjectId(id);
-		marks.forEach(markRepo::delete);
 		subjectRepo.delete(subject);
 		return subject.buildDto();
 	}
@@ -172,8 +168,6 @@ public class CollegeServiceImpl implements CollegeService {
 	}
 
 	void deleteStudent(Student student) {
-		List<Mark> marks = markRepo.findByStudentId(student.getId());
-		marks.forEach(markRepo::delete);
 		studentRepo.delete(student);
 	}
 
