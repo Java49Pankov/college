@@ -255,4 +255,36 @@ class CollegeServiceTest {
 		assertNull(studentRepo.findById(128l).orElse(null));
 	}
 
+	@Test
+	void sqlRequestTest() {
+		QueryDto queryDto = new QueryDto("SELECT * FROM students_lecturers", QueryType.SQL);
+		System.out.println(collegeService.anyQuery(queryDto));
+	}
+
+	@Test
+	void sqlRequestWrongTest() {
+		try {
+			QueryDto queryDto = new QueryDto("SELECT * FROM students", QueryType.SQL);
+			System.out.println(collegeService.anyQuery(queryDto));
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+	}
+
+	@Test
+	void jpqlRequestTest() {
+		QueryDto queryDto = new QueryDto("SELECT student FROM Student student", QueryType.JPQL);
+		System.out.println(collegeService.anyQuery(queryDto));
+	}
+
+	@Test
+	void jpqlRequestWrongTest() {
+		try {
+			QueryDto queryDto = new QueryDto("SELECT student FROM Student", QueryType.JPQL);
+			System.out.println(collegeService.anyQuery(queryDto));
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+	}
+
 }

@@ -5,10 +5,10 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import jakarta.persistence.*;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @NoArgsConstructor
-
 @Table(name = "marks", indexes = { @Index(columnList = "stid"), @Index(columnList = "suid") })
 public class Mark {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,6 +30,11 @@ public class Mark {
 		this.student = student;
 		this.subject = subject;
 		this.score = score;
+	}
+
+	@Override
+	public String toString() {
+		return "Mark [id=" + id + ", student=" + student.name + ", subject=" + subject.name + ", score=" + score + "]";
 	}
 
 }

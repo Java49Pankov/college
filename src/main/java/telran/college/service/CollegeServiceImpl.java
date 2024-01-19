@@ -1,11 +1,14 @@
 package telran.college.service;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.*;
 import lombok.RequiredArgsConstructor;
 import telran.college.dto.*;
 import telran.college.entities.*;
@@ -20,6 +23,7 @@ public class CollegeServiceImpl implements CollegeService {
 	final LecturerRepo lecturerRepo;
 	final SubjectRepo subjectRepo;
 	final MarkRepo markRepo;
+	final EntityManager em;
 
 	@Override
 	public List<String> bestStudentsSubjectType(SubjectType type, int nStudents) {
@@ -151,8 +155,8 @@ public class CollegeServiceImpl implements CollegeService {
 	}
 
 	private Subject findSubject(long id) {
-		return subjectRepo.findById(id).orElseThrow(() -> new NotFoundException(String.format("subject %d not found",
-				id)));
+		return subjectRepo.findById(id)
+				.orElseThrow(() -> new NotFoundException(String.format("subject %d not found", id)));
 	}
 
 	@Override
@@ -169,6 +173,45 @@ public class CollegeServiceImpl implements CollegeService {
 
 	void deleteStudent(Student student) {
 		studentRepo.delete(student);
+	}
+
+	@Override
+	public List<String> anyQuery(QueryDto queryDto) {
+		String queryStr = queryDto.query();
+		List<String> result = null;
+		Query query;
+		try {
+			query = queryDto.queryType() == QueryType.SQL ? em.createNativeQuery(queryStr)
+					: em.createQuery(queryStr);
+			result = getResult(query);
+		} catch (Throwable e) {
+			result = List.of(e.getMessage());
+		}
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<String> getResult(Query query) {
+		List<String> result = Collections.emptyList();
+		List<?> resultList = Collections.emptyList();
+		try {
+			resultList = query.getResultList();
+		} catch (Exception e) {
+			result = List.of(e.getMessage());
+		}
+		if (!resultList.isEmpty()) {
+			result = resultList.get(0).getClass().isArray() ? listObjectArraysProcessing((List<Object[]>) resultList)
+					: listObjectsProcessing(resultList);
+		}
+		return result;
+	}
+
+	private List<String> listObjectsProcessing(List<?> resultList) {
+		return resultList.stream().map(Object::toString).toList();
+	}
+
+	private List<String> listObjectArraysProcessing(List<Object[]> resultList) {
+		return resultList.stream().map(Arrays::deepToString).toList();
 	}
 
 }
