@@ -16,7 +16,7 @@ public interface LecturerRepo extends JpaRepository<Lecturer, Long> {
 			+ "DESC LIMIT :nLecturers")
 	List<LecturerHours> findLecturersMostHours(int nLecturers);
 
-	
+	/******************************************************************/
 	List<NamePhone> findByCity(String city);
-	
+
 }

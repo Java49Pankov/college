@@ -5,7 +5,7 @@ import java.util.List;
 import telran.college.dto.*;
 
 public interface CollegeService {
-	List<String> bestStudentsSubjectType(String type, int nStudents);
+	List<String> bestStudentsSubjectType(SubjectType type, int nStudents);
 
 	List<NameScore> studentsAvgMarks();
 

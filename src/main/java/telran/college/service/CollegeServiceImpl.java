@@ -2,11 +2,10 @@ package telran.college.service;
 
 import java.util.List;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import telran.college.dto.*;
 import telran.college.entities.*;
@@ -23,13 +22,13 @@ public class CollegeServiceImpl implements CollegeService {
 	final MarkRepo markRepo;
 
 	@Override
-	public List<String> bestStudentsSubjectType(String type, int nStudents) {
-		return markRepo.findBestStudentsSubjectType(SubjectType.valueOf(type), nStudents);
+	public List<String> bestStudentsSubjectType(SubjectType type, int nStudents) {
+		return studentRepo.findBestStudentsSubjectType(type, nStudents);
 	}
 
 	@Override
 	public List<NameScore> studentsAvgMarks() {
-		return markRepo.studentsMarks();
+		return studentRepo.studentsMarks();
 	}
 
 	@Override
@@ -39,7 +38,7 @@ public class CollegeServiceImpl implements CollegeService {
 
 	@Override
 	public List<StudentCity> studentsScoresLess(int nThreshold) {
-		return markRepo.findStudentsCityScoresLess(nThreshold);
+		return studentRepo.findStudentCitiesScoresLess(nThreshold);
 	}
 
 	@Override
@@ -61,7 +60,7 @@ public class CollegeServiceImpl implements CollegeService {
 	@Transactional(readOnly = false)
 	public PersonDto addStudent(PersonDto personDto) {
 		if (studentRepo.existsById(personDto.id())) {
-			throw new IllegalStateException(personDto.id() + " already exists");
+			throw new IllegalStateException("student " + personDto.id() + " already exists");
 		}
 		studentRepo.save(new Student(personDto));
 		return personDto;
@@ -71,7 +70,7 @@ public class CollegeServiceImpl implements CollegeService {
 	@Transactional(readOnly = false)
 	public PersonDto addLecturer(PersonDto personDto) {
 		if (lecturerRepo.existsById(personDto.id())) {
-			throw new IllegalStateException(personDto.id() + " already exists");
+			throw new IllegalStateException("lecturer " + personDto.id() + " already exists");
 		}
 		lecturerRepo.save(new Lecturer(personDto));
 		return personDto;
@@ -93,47 +92,46 @@ public class CollegeServiceImpl implements CollegeService {
 		return subjectDto;
 	}
 
-	private Lecturer findLecturer(@Positive Long lecturerId) {
-		return lecturerRepo.findById(lecturerId)
-				.orElseThrow(() -> new NotFoundException(lecturerId + " not exists"));
+	private Lecturer findLecturer(long id) {
+		return lecturerRepo.findById(id)
+				.orElseThrow(() -> new NotFoundException("lecturer " + id + "not exists"));
+	}
+
+	private Student findStudent(long id) {
+		return studentRepo.findById(id)
+				.orElseThrow(() -> new NotFoundException("student " + id + "not exists"));
 	}
 
 	@Override
 	@Transactional(readOnly = false)
 	public MarkDto addMark(MarkDto markDto) {
-		Subject subject = findSubject(markDto.subjectId());
 		Student student = findStudent(markDto.studentId());
+		Subject subject = findSubject(markDto.subjectId());
 		Mark mark = new Mark(student, subject, markDto.score());
 		markRepo.save(mark);
 		return markDto;
 	}
 
-	private Student findStudent(@NotNull @Positive long studentId) {
-		return studentRepo.findById(studentId)
-				.orElseThrow(() -> new NotFoundException(studentId + " not exists"));
-	}
-
-	private Subject findSubject(@NotNull @Positive long subjectId) {
-		return subjectRepo.findById(subjectId)
-				.orElseThrow(() -> new NotFoundException(subjectId + " not exists"));
-	}
-
 	@Override
+	@Transactional(readOnly = false)
 	public PersonDto updateStudent(PersonDto personDto) {
-		Student student = studentRepo.findById(personDto.id())
-				.orElseThrow(() -> new NotFoundException(personDto.id() + " not exists"));
-		student.setCity(personDto.city());
-		student.setPhone(personDto.phone());
+		return updatePerson(personDto, studentRepo, "student");
+	}
+
+	private PersonDto updatePerson(PersonDto personDto, JpaRepository<? extends Person, Long> repo,
+			String personRole) {
+		Person person = repo.findById(personDto.id())
+				.orElseThrow(() -> new NotFoundException(String.format("%s with id %d doesn't exist",
+						personRole, personDto.id())));
+		person.setCity(personDto.city());
+		person.setPhone(personDto.phone());
 		return personDto;
 	}
 
 	@Override
+	@Transactional(readOnly = false)
 	public PersonDto updateLecturer(PersonDto personDto) {
-		Lecturer lecturer = lecturerRepo.findById(personDto.id())
-				.orElseThrow(() -> new NotFoundException(personDto.id() + " not exist"));
-		lecturer.setCity(personDto.city());
-		lecturer.setPhone(personDto.phone());
-		return personDto;
+		return updatePerson(personDto, lecturerRepo, "lecturer");
 	}
 
 	@Override
@@ -141,7 +139,7 @@ public class CollegeServiceImpl implements CollegeService {
 	public PersonDto deleteLecturer(long id) {
 		Lecturer lecturer = findLecturer(id);
 		List<Subject> subjects = subjectRepo.findByLecturerId(id);
-		subjects.forEach(lect -> lect.setLecturer(null));
+		subjects.forEach(s -> s.setLecturer(null));
 		lecturerRepo.delete(lecturer);
 		return lecturer.buildDto();
 	}
@@ -150,25 +148,32 @@ public class CollegeServiceImpl implements CollegeService {
 	@Transactional(readOnly = false)
 	public SubjectDto deleteSubject(long id) {
 		Subject subject = findSubject(id);
-		List<Mark> listMarks = markRepo.findBySubjectId(id);
-		listMarks.forEach(markRepo::delete);
+		List<Mark> marks = markRepo.findBySubjectId(id);
+		marks.forEach(markRepo::delete);
 		subjectRepo.delete(subject);
 		return subject.buildDto();
+	}
+
+	private Subject findSubject(long id) {
+		return subjectRepo.findById(id).orElseThrow(() -> new NotFoundException(String.format("subject %d not found",
+				id)));
 	}
 
 	@Override
 	@Transactional(readOnly = false)
 	public List<PersonDto> deleteStudentsHavingScoresLess(int nScores) {
-		List<Student> deleteStudents = studentRepo.findStudentsScoresLess(nScores);
-		deleteStudents.forEach(st -> {
-			deleteStudent(st);
-		});
-		return deleteStudents.stream().map(Student::buildDto).toList();
+		List<Student> students = getStudentsHavingScoresLess(nScores);
+		students.forEach(this::deleteStudent);
+		return students.stream().map(Student::buildDto).toList();
 	}
 
-	private void deleteStudent(Student student) {
-		List<Mark> mark = markRepo.findByStudentId(student.getId());
-		mark.forEach(markRepo::delete);
+	private List<Student> getStudentsHavingScoresLess(int nScores) {
+		return studentRepo.findStudentsScoresLess(nScores);
+	}
+
+	void deleteStudent(Student student) {
+		List<Mark> marks = markRepo.findByStudentId(student.getId());
+		marks.forEach(markRepo::delete);
 		studentRepo.delete(student);
 	}
 
